@@ -28,8 +28,8 @@ Docker, Docker Compose, Nginx
 
 ### Размещение проекта:
 
-IP: 84.201.158.190
+IP: 51.250.65.65
 
-Frontend: (https://kpd.kirbob.nomoredomains.monster)
+Frontend: (kupoda.ple.nomoredomains.monster)
 
-Backend: (https://api.kpd.kirbob.nomoredomains.monster)
+Backend: (api.kupoda.les.nomoredomains.monster)
