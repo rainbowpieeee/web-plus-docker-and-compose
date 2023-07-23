@@ -1,43 +1,50 @@
-version: '3'
-
+version: "3"
 services:
-  frontend:
-    container_name: frontend
-    build: ./frontend
-    restart:
-      on-failure
-    ports:
-      - 8081:80
-
-  backend:
-    container_name: backend
-    build: ./backend
-    networks:
-      - db
+  kpd_backend_container:
+    container_name: kpd_backend_container
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    image: kpd_backend
     env_file:
-      - .env
-    restart:
-      on-failure
+      - ./backend/.env
     ports:
-      - 4000:3000
+      - "4000:3001"
+    restart: always
     depends_on:
-      - database
-
-  database:
-    container_name: postgres
-    image: postgres:12.12-alpine
+      - postgresql_container
     networks:
-      - db
+      - backend-database
+      - frontend-backend
+  kpd_frontend_container:
+    container_name: kpd_frontend_container
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    image: kpd_frontend
+    ports:
+      - "8081:80"
+    restart: always
+    depends_on:
+      - postgresql_container
+      - kpd_backend_container
+    networks:
+      - frontend-backend
+  postgresql_container:
+    container_name: postgresql_container
+    image: "postgres:latest"
     env_file:
-      - .env
-    restart:
-      on-failure
+      - ./backend/.env
     volumes:
-      - pg-data:/var/lib/postgresql/data/pgdata
-
+      - kpd_database_volume:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - backend-database
 volumes:
-  pg-data:
-    driver: local
-
+  kpd_database_volume:
 networks:
-  db:
+  backend-database:
+    driver: bridge
+    internal: true
+  frontend-backend:
+    driver: bridge

@@ -1,49 +1,54 @@
-import { Length, IsEmail, IsString, IsNotEmpty, IsUrl } from 'class-validator';
-import { BaseEntity } from 'src/general/baseEntity';
-import { Offer } from 'src/offers/entities/offer.entity';
-import { Wish } from 'src/wishes/entities/wish.entity';
-import { Wishlist } from 'src/wishlists/entities/wishlist.entity';
-import { Entity, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Column,
+  OneToMany,
+} from 'typeorm';
+import { Length, IsNotEmpty, IsUrl, IsEmail } from 'class-validator';
+import { Wish } from '../../wisches/entities/wisch.entity';
+import { Wishlist } from '../../wischlists/entities/wischlist.entity';
+import { Offer } from '../../offers/entities/offer.entity';
+import {
+  USERNAME_LENGTH_MIN,
+  USERNAME_LENGTH_MAX,
+  ABOUT_LENGTH_MIN,
+  ABOUT_LENGTH_MAX,
+} from '../../constants';
 
 @Entity()
-export class User extends BaseEntity {
-  @Column({
-    type: 'varchar',
+export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column('varchar', {
+    length: USERNAME_LENGTH_MAX,
     unique: true,
+    nullable: true,
   })
-  @Length(2, 30)
-  @IsString()
+  @Length(USERNAME_LENGTH_MIN, USERNAME_LENGTH_MAX)
   @IsNotEmpty()
   username: string;
 
-  @Column({
-    type: 'varchar',
+  @Column('varchar', {
+    length: ABOUT_LENGTH_MAX,
     default: 'Пока ничего не рассказал о себе',
   })
-  @IsString()
-  @Length(2, 200)
+  @Length(ABOUT_LENGTH_MIN, ABOUT_LENGTH_MAX)
   about: string;
 
-  @Column({
-    type: 'varchar',
-    default: 'https://i.pravatar.cc/300',
-  })
-  @IsString()
+  @Column('varchar', { default: 'https://i.pravatar.cc/300' })
   @IsUrl()
   avatar: string;
 
-  @Column({
-    type: 'varchar',
-    unique: true,
-  })
+  @Column('varchar', { unique: true, nullable: false })
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
-  @Column({
-    type: 'varchar',
-    select: false,
-  })
-  @IsString()
+  @Column('varchar', { nullable: true })
+  @IsNotEmpty()
   password: string;
 
   @OneToMany(() => Wish, (wish) => wish.owner)
@@ -54,4 +59,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.owner)
   wishlists: Wishlist[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

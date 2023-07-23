@@ -1,4 +1,4 @@
-export const URL = "https://api.kupoda.lev.nomoredomains.monster";
+export const URL = "https://api.kupoda.les.nomoredomains.monster";
 
 export const MINIMUM_PASSWORD_LENGTH = 3;
 export const MINIMUM_USERNAME_LENGTH = 3;

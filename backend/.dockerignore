@@ -1,7 +1,20 @@
 node_modules
 
-dist
+.editorconfig
+
+.env.backend
+.env.backend.example
+.env.postgresql
+.env.postgresql.example
+
+.eslintrc.js
+.prettierrc
 
 .gitignore
 
+Dockerfile
+Dockerfile.builder
+
 README.md
+
+database

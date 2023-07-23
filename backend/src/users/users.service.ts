@@ -1,94 +1,111 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { HashService } from 'src/hash/hash.service';
+import { UserHash } from './helpers/hash.helper';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private hashService: HashService,
+    private readonly userHasch: UserHash,
   ) {}
 
+  private readonly userInfoWithoutPasswordEmail = {
+    select: {
+      id: true,
+      username: true,
+      about: true,
+      avatar: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  };
+
+  private readonly userInfoWithoutPassword = {
+    select: {
+      ...this.userInfoWithoutPasswordEmail.select,
+      email: true,
+    },
+  };
+  // добавлен фильтр исключений в контроллере по роуту  post 'users'
   async create(createUserDto: CreateUserDto) {
-    const user = await this.userRepository.create({
-      ...createUserDto,
-      password: await this.hashService.hash(createUserDto.password),
+    createUserDto.password = await this.userHasch.hashPassword(
+      createUserDto.password,
+    );
+    return await this.userRepository.save(createUserDto);
+  }
+
+  async findAll() {
+    return await this.userRepository.find();
+  }
+
+  async findOne(
+    query: { [name: string]: number | string },
+    userInfo = undefined,
+  ) {
+    return await this.userRepository.findOneOrFail({
+      ...userInfo,
+      where: query,
     });
-    return this.userRepository.save(user);
+  }
+  // добавлен фильтр исключений в контроллере по роуту  patch 'users/me'
+  async update(
+    query: { [name: string]: string | number },
+    updateOfferDto: UpdateUserDto,
+  ) {
+    return await this.userRepository.update(query, updateOfferDto);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  remove(query: { [name: string]: string | number }) {
+    return this.userRepository.delete(query);
   }
 
-  async findOne(id: number): Promise<any> {
-    const user = await this.userRepository.findOneBy({ id });
-    const { password, ...result } = user;
-    return result;
-  }
-
-  async findUserForAuth(username: string) {
-    const user = await this.userRepository.findOne({
-      where: { username },
-      select: ['password'],
+  async findMany(query: string) {
+    return await this.userRepository.find({
+      ...this.userInfoWithoutPasswordEmail,
+      where: [{ username: query }, { email: query }],
     });
-    return user;
   }
 
-  async findUserByName(username: string) {
-    const user = await this.userRepository.findOneBy({ username });
-    if (!user) {
-      throw new NotFoundException('Такого пользователя не существует');
-    }
-    const { password, ...rest } = user;
-    return rest;
-  }
-
-  async findByEmail(email: string) {
-    const user = await this.userRepository.findOneBy({ email });
-    return user;
-  }
-
-  async findBy(query: string): Promise<User> {
-    const emailReg =
-      /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
-    let user;
-    if (emailReg.test(query)) {
-      user = await this.userRepository.findOne({
-        where: { email: query },
-      });
-    } else
-      user = await this.userRepository.findOne({
-        where: { username: query },
-      });
-    if (!user) throw new NotFoundException('Ничего не найдено');
-    return user;
-  }
-
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async updateMe(userId: number, updateUserDto: UpdateUserDto) {
     if (updateUserDto.password) {
-      const hashedPass = await this.hashService.hash(updateUserDto.password);
-      updateUserDto.password = hashedPass;
+      updateUserDto.password = await this.userHasch.hashPassword(
+        updateUserDto.password,
+      );
     }
-    await this.userRepository.update(id, updateUserDto);
-    return await this.findOne(id);
+    await this.update({ id: userId }, updateUserDto);
+    return await this.findOne({ id: userId }, this.userInfoWithoutPassword);
   }
 
-  async getUserWishes(id: number) {
-    const { wishes } = await this.userRepository.findOne({
-      where: { id },
-      select: ['wishes'],
-      relations: ['wishes', 'wishes.owner', 'wishes.offers'],
-    });
-    for (const wish of wishes) {
-      delete wish.owner.password;
-      delete wish.owner.email;
-    }
-    return wishes;
+  async findMyWishes(userId: number) {
+    return await this.findOne(
+      { id: userId },
+      {
+        select: {
+          wishes: true, // выбрано не все, что нужно по свагеру, но в коде не увидел, куда нужна вся эта информация
+        },
+        relations: {
+          wishes: true,
+        },
+      },
+    );
+  }
+
+  async findAnotherUserWishes(username: string) {
+    return await this.findOne(
+      { username },
+      {
+        select: {
+          wishes: true, // выбрано не все, так как по коду нужна только информация о самом подарке
+        },
+        relations: {
+          wishes: true,
+        },
+      },
+    );
   }
 }

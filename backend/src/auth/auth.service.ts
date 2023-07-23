@@ -1,30 +1,47 @@
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import { UnauthorizedException } from '@nestjs/common/exceptions';
-import { HashService } from 'src/hash/hash.service';
+import { ServerError } from '../errors/errors';
+import { UserHash } from 'src/users/helpers/hash.helper';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
-    private usersService: UsersService,
-    private hashService: HashService,
+    private readonly userHasch: UserHash,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  auth(user: User) {
-    const payload = { sub: user.id };
-    return { access_token: this.jwtService.sign(payload) };
+  async signup(createUserDto: CreateUserDto) {
+    return await this.usersService.create(createUserDto);
   }
 
-  async validatePassword(username: string, pass: string) {
-    const user = await this.usersService.findUserForAuth(username);
-
-    if (!user || !this.hashService.compare(pass, user.password)) {
-      throw new UnauthorizedException('Неправильный логин или пароль');
+  async validateUser(username: string, password: string) {
+    const user = await this.usersService.findOne({ username });
+    if (user) {
+      const { password: hashPassword, ...restUser } = user;
+      const isPasportValid = await this.userHasch.validatePassword(
+        password,
+        hashPassword,
+      );
+      if (isPasportValid) {
+        return restUser;
+      }
     }
-    const { password, ...result } = user;
-    return result;
+    return null;
+  }
+
+  async signin(userName: string, userId: number) {
+    const payload = { userName, userId };
+    let token: string;
+    try {
+      token = this.jwtService.sign(payload);
+    } catch {
+      throw new ServerError('Ошибка сервера при авторизации. Попробуйте снова');
+    }
+    return {
+      access_token: token,
+    };
   }
 }
