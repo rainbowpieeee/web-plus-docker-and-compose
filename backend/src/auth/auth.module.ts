@@ -1,33 +1,34 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
+import { LocalStrategy } from './local.strategy';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { UsersModule } from 'src/users/users.module';
-import { LocalStrategy } from './strategies/local.strategy';
-import { HashModule } from 'src/hash/hash.module';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ForbiddenExceptionFilter } from '../filters/user-exists.filter';
 
 @Module({
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
-  exports: [AuthService],
   imports: [
     UsersModule,
     PassportModule,
-    HashModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        inject: [ConfigService],
-        secret: process.env.JWT_SECRET,
-        signOptions: { expiresIn: '1d' },
+        secret: configService.get('jwt.secret'),
+        signOptions: { expiresIn: configService.get('jwt.expiresin') },
       }),
+      inject: [ConfigService],
     }),
-    ConfigModule,
+  ],
+  controllers: [AuthController],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_FILTER, useClass: ForbiddenExceptionFilter },
   ],
 })
 export class AuthModule {}
