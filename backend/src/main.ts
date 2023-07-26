@@ -8,8 +8,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: {
       origin: [
-        'http://kpd.kirbob.nomoredomains.monster',
-        'https://kpd.kirbob.nomoredomains.monster',
+        'http://kupoda.ple.nomoredomains.monster',
+        'https://kupoda.ple.nomoredomains.monster',
       ],
     },
   });
