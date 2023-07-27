@@ -30,6 +30,6 @@ Docker, Docker Compose, Nginx
 
 IP: 51.250.65.65
 
-Frontend: (kupoda.ple.nomoredomains.monster)
+Frontend: (https://kupoda.ple.nomoredomains.monster)
 
-Backend: (api.kupoda.les.nomoredomains.monster)
+Backend: (https://api.kupoda.les.nomoredomains.monster)
