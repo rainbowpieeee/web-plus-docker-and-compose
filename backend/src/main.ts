@@ -6,12 +6,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: {
-      origin: [
-        'http://kupoda.ple.nomoredomains.monster',
-        'https://kupoda.ple.nomoredomains.monster',
-      ],
-    },
+    cors: true
   });
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useGlobalPipes(
