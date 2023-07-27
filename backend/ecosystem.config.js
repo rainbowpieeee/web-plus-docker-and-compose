@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'backend_kpd',
-      script: './dist/main.js',
+      script: './dist/src/main.js',
     },
   ],
 };
