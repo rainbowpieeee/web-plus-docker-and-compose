@@ -87,6 +87,6 @@ export class WischesController {
     @Request() request: RequestExpress,
   ) {
     const userId = this.userHelper.getUserIdOutRequest(request);
-    return await this.wischesService.copy({ id: +param.id }, userId);
+    return await this.wischesService.copy(+param.id, userId);
   }
 }
