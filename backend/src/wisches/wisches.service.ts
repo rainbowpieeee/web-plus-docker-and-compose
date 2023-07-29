@@ -177,61 +177,74 @@ export class WischesService {
     }
   }
 
-  async copy(wishId: { id: number }, userId: number) {
+  async copy(wishId: number , userId: number) {
     // находим id ползователя, который копирует карточку подарка
-    const owner = await this.usersService.findOne({ id: userId });
+    const user = await this.usersService.findOne({ id: userId });
     // находим подарок, на карточке которого пользователь начал процесс копирования
-    const copiedWish = await this.findOne({ where: wishId });
-    // создаем переменную, где будет id подарка, который является оригинальным
-    let originalWishId: number;
-    if (!copiedWish.copied_from) {
-      // если подарок, на карточке которого начато копирование, сам не является копией, то
-      // он принимается за оригинальный и у него увеличивается число копий
-      originalWishId = copiedWish.id;
-      await this.update(
-        { id: copiedWish.id },
-        {
-          copied: copiedWish.copied + 1,
-        },
-      );
-    } else {
-      // есди подарок, на карточке которого начато копирование, является копией, то находим
-      // оригинал и увеличиваем у него число копий
-      originalWishId = copiedWish.copied_from;
-      const originalWish = await this.findOne({
-        where: { id: originalWishId },
-      });
-      await this.update(
-        { id: originalWish.id },
-        {
-          copied: originalWish.copied + 1,
-        },
-      );
-    }
-    // создаем копию подарка
-    const copiedWishData = {
-      name: copiedWish.name,
-      link: copiedWish.link,
-      image: copiedWish.image,
-      price: copiedWish.price,
-      description: copiedWish.description,
-      copied_from: originalWishId,
-      owner,
-    };
-    const similarUserWish = this.wishRepository.findOne({
-      relations: {
-        owner: true,
-      },
-      where: [
-        { copied_from: originalWishId, owner: { id: userId } },
-        { id: originalWishId, owner: { id: userId } },
-      ],
+    const wish = await this.findOne({ where: {id: wishId} });
+    const copyWish = this.wishRepository.create({
+      ...wish,
+      owner: user,
+      raised: 0,
     });
-    if (!similarUserWish) {
-      await this.create(copiedWishData);
-      return {};
-    } else {
-      throw new ReCopyingWish();
-    }
+
+    const originalWish = this.wishRepository.create({
+      ...wish,
+      copied: wish.copied + 1,
+    });
+
+    await this.wishRepository.insert(copyWish);
+    return await this.wishRepository.save(originalWish);
+    // // создаем переменную, где будет id подарка, который является оригинальным
+    // let originalWishId: number;
+    // if (!copiedWish.copied_from) {
+    //   // если подарок, на карточке которого начато копирование, сам не является копией, то
+    //   // он принимается за оригинальный и у него увеличивается число копий
+    //   originalWishId = copiedWish.id;
+    //   await this.update(
+    //     { id: copiedWish.id },
+    //     {
+    //       copied: copiedWish.copied + 1,
+    //     },
+    //   );
+    // } else {
+    //   // есди подарок, на карточке которого начато копирование, является копией, то находим
+    //   // оригинал и увеличиваем у него число копий
+    //   originalWishId = copiedWish.copied_from;
+    //   const originalWish = await this.findOne({
+    //     where: { id: originalWishId },
+    //   });
+    //   await this.update(
+    //     { id: originalWish.id },
+    //     {
+    //       copied: originalWish.copied + 1,
+    //     },
+    //   );
+    // }
+    // // создаем копию подарка
+    // const copiedWishData = {
+    //   name: copiedWish.name,
+    //   link: copiedWish.link,
+    //   image: copiedWish.image,
+    //   price: copiedWish.price,
+    //   description: copiedWish.description,
+    //   copied_from: originalWishId,
+    //   owner,
+    // };
+    // const similarUserWish = this.wishRepository.findOne({
+    //   relations: {
+    //     owner: true,
+    //   },
+    //   where: [
+    //     { copied_from: originalWishId, owner: { id: userId } },
+    //     { id: originalWishId, owner: { id: userId } },
+    //   ],
+    // });
+    // if (!similarUserWish) {
+    //   await this.create(copiedWishData);
+    //   return {};
+    // } else {
+    //   throw new ReCopyingWish();
+    // }
   }
 }
