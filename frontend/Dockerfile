@@ -1,4 +1,4 @@
-FROM node:16-alpine AS kpd_frontend_builder
+FROM node:16.3.0-alpine AS kpd_frontend_builder
 WORKDIR /app
 COPY ./package*.json ./
 RUN npm ci
