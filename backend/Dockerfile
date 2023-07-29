@@ -1,11 +1,11 @@
-FROM node:16-alpine AS kpd_backend_builder
+FROM node:16.3.0-alpine AS kpd_backend_builder
 WORKDIR /app
 COPY packag*.json ./
 RUN npm ci
 COPY . ./
 RUN npm run build
 
-FROM node:16-alpine AS kpd_backend
+FROM node:16.3.0-alpine AS kpd_backend
 WORKDIR /app
 COPY --from=kpd_backend_builder /app/package*.json ./
 RUN npm ci --omit=dev && npm install -g pm2

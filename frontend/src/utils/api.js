@@ -16,7 +16,6 @@ const headersWithAuthorizeFn = () => ({
 
 export const registerUser = (userData) => {
   return fetch(`${URL}/signup/`, {
-	mode: 'no-cors',
     method: "POST",
     headers: headersWithContentType,
     body: JSON.stringify(userData),
@@ -25,7 +24,6 @@ export const registerUser = (userData) => {
 
 export const loginUser = (username, password) => {
   return fetch(`${URL}/signin/`, {
-	mode: 'no-cors',
     method: "POST",
     headers: headersWithContentType,
     body: JSON.stringify({ username, password }),
